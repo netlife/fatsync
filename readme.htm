@@ -1,0 +1,128 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>FatSync Readme</title>
+<style type="text/css">
+	* {margin:0;padding:0}
+	body {
+		font-family:Arial, Helvetica, Verdana, sans-serif;
+		font-size:15px;
+		line-height:1.4em;
+		background:#eee;
+		color:#444;
+	}
+	a {
+		text-decoration:none;
+		color:#337898;
+}
+	a:hover {
+		color:#0072E6;
+	}
+	p {
+		margin-bottom:0.7em;
+	}
+	#wrapper {
+		width:760px;
+		margin:1em auto;
+		border:1px solid #666;
+		background:#fff;
+		padding:1.5em 0.8em;
+	}
+	h1 {
+		font-family:"Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+		font-size:2em;
+		color:#C6641A;
+		margin-bottom:0.6em;
+	}
+	h1 .version {
+		color:#D1502C;
+	}
+	h2 {
+		font-family:Helvetica, Arial, sans-serif;
+		font-size:1.2em;
+		font-weight:normal;
+		color:#666;
+		margin-bottom:1em;
+	}
+	h3 {
+		color:#004BA1;
+		font-size:1.15em;
+		font-family:Helvetica, Arial, sans-serif;
+		margin-bottom:0.3em;
+		margin-top:1.2em;
+		font-weight:bold;
+	}
+	pre {
+		border:1px solid #004BA1;
+		background:#FDF8DC;
+		padding:1em;
+		font-family:Monaco, "Courier New", Courier, monospace;
+		font-size:0.8em;
+		line-height:1.4em;
+		margin:1em 0;
+		color:#005;
+	}
+	em {
+		font-style:normal;
+		color:#007144;
+	}
+	strong {
+		font-weight:normal;
+		color:#000;
+	}
+</style>
+</head>
+<body>
+<div id="wrapper">
+  <h1>FatSync <span class="version">0.1</span></h1>
+    <h2>Copyright &copy; 2009 <a href="http://www.fatpublisher.com">Fatpublisher Pty Ltd</a></h2>
+    <p>This <a href="http://www.php.net">PHP</a> application synchronises client and contact data between online data sources, including <a href="http://www.getharvest.com">Harvest</a> and <a href="http://www.highrisehq.com">Highrise</a>.</p>
+    <p>You will need<strong> PHP 5+</strong> with <strong>CURL</strong> and <strong>GZIP</strong> support. You will also need a scheduling mechanism, such as <strong>Cron</strong> or <strong>Windows Task Scheduler</strong>.</p>
+  <p>To set up <strong>FatSync</strong>, you will need a basic working knowledge of PHP.</p>
+	<h3>Configuration</h3>
+	<p>Edit <em>config.php</em> to set up <strong>FatSync</strong> with your domain names, login details, etc. Each data source will have a different set of required information. In this example, we will set up <strong>FatSync</strong> to connect to the <strong>Highrise</strong> online application:</p>
+	<pre>// create a new instance of the highrise data source class:
+$highrise = new highrise;
+
+// give your class instance the information it needs to connect to your service:
+$highrise->subdomain      = 'yourdomain';
+$highrise->username       = 'yourusername';
+$highrise->password       = 'yourpassword';
+
+// set additional service-specific options:
+$highrise->ssl            = true;       // enable secure access
+$highrise->contact_tag    = 'client';   // tag defining contacts as clients
+
+// set sync options for this data source (defaults are always false):
+$highrise->sync_additions = true;       // items added to this data source will
+                                        // be copied to other data sources.
+$highrise->sync_updates   = true;       // chances made to items in this data source
+                                        // will be copied to other data sources.
+$highrise->sync_deletions = true;       // items deleted from this data source will
+                                        // also be deleted from other data sources.
+
+// once all options have been set, add this data source to the data source list.
+$data_sources[0] = $highrise;</pre>
+  <p>Subsequent data sources should be assigned to <em>$data_sources[1]</em>, and so on. When sync conflicts occur (matched records modified on multiple data sources), the order you add them to the <em>$data_sources</em> array will determine which get precedence. For specific setup guides for each data source, see the relevant .txt file.</p>
+  <h3>Operation</h3>
+  <p>Run <em>sync.php</em>, either in a web browser, from the command line, or using a task scheduler like <strong>Cron</strong>.</p>
+  <p>Because certain web APIs impose limits on how many calls can be made to them in any given timeframe, each time you run <em>sync.php</em>, a different set of records will be examined (starting with whichever records have been waiting the longest). The first time you run it, only client information will be synchronised. Contacts are synchronised on the second and subsequent run.</p>
+  <p><strong>Clients</strong> are paired based on their <strong>company name</strong>. <strong>Contacts</strong> are paired based on their <strong>email addresses</strong>.</p>
+  <p>Client information that will be synced includes company name and address.</p>
+  <p>Contact information that will be synced includes first name, last name, email address, mobile, phone number and fax number.</p>
+  <p>Every <strong>addition</strong>, <strong>update</strong> and <strong>deletion</strong> is logged to the <em>sync.log</em> file. <em>Sync.php</em> also outputs the logged actions, which can be observed in a browser or terminal.</p>
+  <h3>Notes<br />
+  </h3>
+  <p><strong>FatSync</strong> stores pairing information in a file called <em>local.data</em>, in the same folder as <em>sync.php</em>. Make sure PHP has <strong>write access</strong> to this folder. You can also delete this<em> local.data</em> file to re-set <strong>FatSync</strong> pairing, for example, when you add or remove a data source. For security, the <em>local.data</em> file only contains <strong>ID</strong> and <strong>hash</strong> information; no actual client/contact data is stored locally.</p>
+  <p><em>Init.php</em> sets the PHP maximum execution time to <strong>6 minutes</strong>. Depending on the quality of your connection to your data sources, you may need to increase this number. If you prefer to set the time limit to 0 (unlimited), make sure your remote procedures have realistic timeouts. The <em>fs_rest</em> class (base for the bundled <strong>harvest</strong> and <strong>highrise</strong> classes) sets the <strong>CURL</strong> timeout to <strong>10 seconds</strong> per call.</p>
+  <p>When records are deleted from data sources which do not have <em>sync_deletions</em> set to true, <strong>FatSync</strong> remembers that record and records that it has been deleted, so that it doesn’t get re-created on the next sync. This means that if you recreate that record, it won’t automatically be pair with its old partner records. Instead, new, identical records will be created in other data sources, so that the old pairing remains intact.</p>
+  <p>For <strong>REST</strong> data sources (including <strong>highrise</strong>), using SSL tends to make the sync process considerably slower. If security isn’t a huge consideration for you, you may wish to disable SSL.<br />
+  </p>
+  <h3>Development<br />
+  </h3>
+  <p>If you want to write your own class for a data source, you simply have to implement the <em>fs_data_source</em> class. More information can be found in the <em>class.fs_data_source.php</em> file.</p>
+  <p><strong>FatSync</strong> includes all files inside the <em>modules</em> folder at run-time, so extra classes can be made available simply by leaving them in this folder.</p>
+</div>
+</body>
+</html>
